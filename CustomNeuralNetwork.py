@@ -32,11 +32,11 @@ class customNet(nn.Module):
 
 
     def predict(self, x):
-        x = torch.flatten(x)
+        # x = torch.flatten(x)
         return self.model(x)
         
     
-    def train(self, X, Y, batch_size = 64, epochs = 1):
+    def train2(self, X, Y, batch_size = 64, epochs = 1):
         X, Y = shuffle(X, Y)
         
         for epoch in range(epochs):
@@ -48,13 +48,14 @@ class customNet(nn.Module):
                 i = epoch*batch_size + sample_idx
                 y_predicted = self.predict(X[i])
                 # print(f"\n\n {y_predicted} \n\n")
-                target = torch.zeros(size=(10,0))
-                target = torch.zeros(self.num_of_classes, dtype=torch.float)
-                target[Y[i]] = 1.0
-                # print(f"\n\n {target} \n\n")
 
-                loss = self.loss_function(target, y_predicted)
-                print(f"Loss: {loss}")
+                target = torch.zeros(self.num_of_classes, dtype=torch.float32)
+                target[Y[i]] = 1.0
+
+                loss = self.loss_function(y_predicted.unsqueeze(0), torch.tensor([Y[i]]))
+                # loss = self.loss_function(y_predicted, target)
+                # print(f"Loss: { loss}")
+                # print(f"\n\n {target} \n\n")
 
                 loss.backward()
                 total_loss += loss
@@ -67,6 +68,28 @@ class customNet(nn.Module):
             # loss.backward()
             # self.optimizer.step()
 
+    def train(self, X, Y, batch_size=64, epochs=1):
+        X, Y = shuffle(X, Y)
+
+        for epoch in range(epochs):
+            total_loss = 0.0
+
+            for i in range(0, len(X), batch_size):
+                x = X[i:i+batch_size]
+                target = Y[i:i+batch_size]
+
+                y_pred = self.predict(x)
+
+                loss = self.loss_function(y_pred, target)
+
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+
+                total_loss += loss.item()
+
+            print(f"Epoch {epoch+1}, Total Loss: {total_loss}")
+
 
 
 
@@ -77,10 +100,10 @@ print(f"number of training samples: {len(x_train)}")
 print(f"Input Images size: {x_train[0].shape}")
 INPUT_DATA_SIZE = 784
 NUM_CLASSES = 10
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.03
 
 
 myNet = customNet(INPUT_DATA_SIZE, NUM_CLASSES, LEARNING_RATE)
 batch_size = 32
-epochs = 1
+epochs = 20
 myNet.train(x_train, y_train, batch_size=batch_size, epochs=epochs)

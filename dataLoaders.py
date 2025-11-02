@@ -4,7 +4,8 @@ from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 import os
-def load_train_val():
+
+def load_train_val(pytorch=False):
     # Load data
 
 
@@ -23,9 +24,11 @@ def load_train_val():
     # Stratified split (60/20/20)
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.83, stratify=y, random_state=42)
 
+    if pytorch:
+        return torch.from_numpy(x_train), torch.from_numpy(x_val), torch.from_numpy(y_train), torch.from_numpy(y_val)
     return x_train, x_val, y_train, y_val
 
-def load_test():
+def load_test(pytorch=False):
     # Load data
     df = pd.read_csv("mnist_test.csv")
 
@@ -39,4 +42,6 @@ def load_test():
     # Keep original shape (28x28) for later (for NN)
     X_images = x_test.reshape(-1, 1, 28, 28)
 
+    if pytorch:
+        return torch.from_numpy(x_test), torch.from_numpy(y_test)
     return x_test, y_test

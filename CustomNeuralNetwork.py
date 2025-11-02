@@ -33,6 +33,8 @@ class customNet(nn.Module):
 
         self.trainingLoss = []
         self.validaionLoss = []
+        self.trainAcc = []
+        self.validateAcc = []
 
     def initializeWeights(self):
         # print(self.parameters())
@@ -50,10 +52,19 @@ class customNet(nn.Module):
     def getValidationLoss(self):
         return self.validaionLoss
 
-    def emptyLossLists(self):
+    def getTrainAccuracy(self):
+        return self.trainAcc
+        
+    def getValAccuracy(self):
+        return self.validateAcc
+
+
+    def emptyLists(self):
         
         self.trainingLoss = []
         self.validaionLoss = []
+        self.trainAcc = []
+        self.validateAcc = []
 
     def train2(self, X, Y, batch_size = 64, epochs = 1):
         X, Y = shuffle(X, Y)
@@ -94,33 +105,48 @@ class customNet(nn.Module):
 
             total_loss = 0.0
             total_val_loss = 0.0
+            total_train_correct = 0
+            total_val_correct = 0
 
             for i in range(0, len(X), batch_size):
                 x = X[i:i+batch_size]
                 target = Y[i:i+batch_size]
                 y_pred = self.predict(x)
-
+                    
+                preds = torch.argmax(y_pred, dim=1)
+                total_train_correct += (preds == target).sum().item()
+                
                 loss = self.loss_function(y_pred, target)
                 total_loss += loss.item()
-                
-                if (X_val != None) and (Y_val != None):
-             
-                    x_val = X_val[i:i+batch_size]
-                    target_val = Y_val[i:i+batch_size]
-                    y_val_pred = self.predict(x_val)
-                    val_loss = self.loss_function(y_val_pred, target_val)
-                    total_val_loss += val_loss.item()
                 
 
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-            self.trainingLoss.append(total_loss)
+                            
             if (X_val != None) and (Y_val != None):
+                y_val_pred = self.predict(X_val)
+                val_loss = self.loss_function(y_val_pred, Y_val)
+                total_val_loss = val_loss.item()
+                val_preds = torch.argmax(y_val_pred, dim=1)
+                total_val_correct = (val_preds == Y_val).sum().item()
+
+            trainAccuracy =  total_train_correct / (len(X)) 
+            self.trainAcc.append(trainAccuracy)
+            
+            avrg_loss = total_loss/(len(X)//batch_size)
+            
+            self.trainingLoss.append(avrg_loss)
+            
+            if (X_val != None) and (Y_val != None):
+                validationAccuracy =  total_val_correct / len(X_val) 
+                self.validateAcc.append(validationAccuracy)
                 self.validaionLoss.append(total_val_loss)
-                print(f"Epoch {epoch+1}, Total Loss: {total_loss},  Total Evaluation Loss: {total_val_loss}")
+                print(f"-> Epoch {epoch+1}, Total Loss: {avrg_loss},  Total Evaluation Loss: {total_val_loss}")
+                print(f"-> Model Training accuracy: {trainAccuracy},  Model Evaluation Accuracy: {validationAccuracy} \n")
             else:
                 print(f"Epoch {epoch+1}, Total Loss: {total_loss}")
+                print(f"-> Model Training accuracy: {trainAccuracy}\n")
 
             

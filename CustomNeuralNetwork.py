@@ -9,6 +9,8 @@ class customNet(nn.Module):
     
     def __init__(self):
         super(customNet, self).__init__()
+        
+        self.loss = nn.CrossEntropyLoss()
         self.model = nn.Sequential(
         OrderedDict(
                 [
@@ -24,10 +26,4 @@ class customNet(nn.Module):
         x = torch.flatten(x)
         return self.model(x)
     
-
-from dataLoaders import load_train_val, load_test
-x_train, x_val, y_train, y_val = load_train_val()
-
-
-    
-    
+    # def train(self, batch_size = 64, epochs = 1):

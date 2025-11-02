@@ -27,9 +27,15 @@ class customNet(nn.Module):
             )
         )
         
+
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
 
+    def initializeWeights(self):
+        # print(self.parameters())
+        for param in self.parameters():
+            if param.dim() > 1:
+                nn.init.kaiming_uniform_(param, mode="fan_in", nonlinearity="relu")
 
     def predict(self, x):
         # x = torch.flatten(x)
@@ -104,6 +110,7 @@ LEARNING_RATE = 0.03
 
 
 myNet = customNet(INPUT_DATA_SIZE, NUM_CLASSES, LEARNING_RATE)
+myNet.initializeWeights()
 batch_size = 32
 epochs = 20
 myNet.train(x_train, y_train, batch_size=batch_size, epochs=epochs)

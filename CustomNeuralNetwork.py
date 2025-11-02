@@ -17,9 +17,9 @@ class customNet(nn.Module):
         self.model = nn.Sequential(
         OrderedDict(
                 [
-                ("Hidden Layer #1", nn.Linear(input_size, input_size//3)),
+                ("Hidden Layer #1", nn.Linear(input_size, input_size//2)),
                 ("relu1", nn.ReLU()),
-                ("Hidden Layer #2", nn.Linear(input_size//3, self.num_of_classes*3)),
+                ("Hidden Layer #2", nn.Linear(input_size//2, self.num_of_classes*3)),
                 ("relu1", nn.ReLU()),
                 ("Output Layer", nn.Linear(self.num_of_classes*3, self.num_of_classes)),
                  # ("relu", nn.ReLU()),
@@ -31,6 +31,9 @@ class customNet(nn.Module):
         self.loss_function = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.parameters(), lr=learning_rate)
 
+        self.trainingLoss = []
+        self.validaionLoss = []
+
     def initializeWeights(self):
         # print(self.parameters())
         for param in self.parameters():
@@ -40,8 +43,18 @@ class customNet(nn.Module):
     def predict(self, x):
         # x = torch.flatten(x)
         return self.model(x)
-        
     
+    def getTrainingLoss(self):
+        return self.trainingLoss
+    
+    def getValidationLoss(self):
+        return self.validaionLoss
+
+    def emptyLossLists(self):
+        
+        self.trainingLoss = []
+        self.validaionLoss = []
+
     def train2(self, X, Y, batch_size = 64, epochs = 1):
         X, Y = shuffle(X, Y)
         
@@ -74,28 +87,43 @@ class customNet(nn.Module):
             # loss.backward()
             # self.optimizer.step()
 
-    def train(self, X, Y, batch_size=64, epochs=1):
+    def train(self, X, Y, X_val = None, Y_val = None, batch_size=64, epochs=1):
         X, Y = shuffle(X, Y)
 
         for epoch in range(epochs):
+
             total_loss = 0.0
+            total_val_loss = 0.0
 
             for i in range(0, len(X), batch_size):
                 x = X[i:i+batch_size]
                 target = Y[i:i+batch_size]
-
                 y_pred = self.predict(x)
 
                 loss = self.loss_function(y_pred, target)
+                total_loss += loss.item()
+                
+                if (X_val != None) and (Y_val != None):
+             
+                    x_val = X_val[i:i+batch_size]
+                    target_val = Y_val[i:i+batch_size]
+                    y_val_pred = self.predict(x_val)
+                    val_loss = self.loss_function(y_val_pred, target_val)
+                    total_val_loss += val_loss
+                
 
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
-                total_loss += loss.item()
+            self.trainingLoss.append(total_loss)
+            if (X_val != None) and (Y_val != None):
+                self.validaionLoss.append(total_val_loss)
+                print(f"Epoch {epoch+1}, Total Loss: {total_loss},  Total Evaluation Loss: {total_val_loss}")
+            else:
+                print(f"Epoch {epoch+1}, Total Loss: {total_loss}")
 
-            print(f"Epoch {epoch+1}, Total Loss: {total_loss}")
-
+            
 
 
 
@@ -113,4 +141,4 @@ myNet = customNet(INPUT_DATA_SIZE, NUM_CLASSES, LEARNING_RATE)
 myNet.initializeWeights()
 batch_size = 32
 epochs = 20
-myNet.train(x_train, y_train, batch_size=batch_size, epochs=epochs)
+myNet.train(x_train, y_train, x_val, y_val, batch_size=batch_size, epochs=epochs)

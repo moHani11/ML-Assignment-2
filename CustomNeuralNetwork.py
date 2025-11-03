@@ -48,10 +48,10 @@ class customNet(nn.Module):
     def getValidationLoss(self):
         return self.validaionLoss
 
-    def getTrainAccuracy(self):
+    def getTrainingAccuracy(self):
         return self.trainingAccuracy
         
-    def getValAccuracy(self):
+    def getValidationAccuracy(self):
         return self.validationAccuracy
 
     def emptyLists(self):
